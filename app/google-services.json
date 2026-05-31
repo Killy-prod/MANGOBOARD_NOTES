@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "251273207441",
+    "project_id": "mango-board-notes",
+    "storage_bucket": "mango-board-notes.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251273207441:android:7cb27ae50fbeb97b4b6930",
+        "android_client_info": {
+          "package_name": "com.prodkilly.mangoboard_notes"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAD7LOjAgr62ttMG-BUu-bxuxKBhUx6CVA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
