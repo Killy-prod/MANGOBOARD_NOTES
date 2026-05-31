@@ -14,17 +14,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-// Importa tu tema (MangoBoard_APPTheme) si lo estás usando
 
 class FormActivity : ComponentActivity() {
 
-    // 1. Inyectamos nuestro ViewModel
+    // Inyectamos nuestro ViewModel
     private val viewModel: ViewModel_board by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 2. Recibimos los datos del Intent (Si es null, significa que estamos creando una nueva nota)
+        // Recibimos los datos del Intent (Si es null, significa que estamos creando una nueva nota)
         val notaId = intent.getStringExtra("nota_id")
         val provActual = intent.getStringExtra("proveedor") ?: ""
         val tonsActuales = intent.getDoubleExtra("toneladas", 0.0)
@@ -44,6 +43,7 @@ class FormActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class) // <- Súper importante para el menú desplegable
 @Composable
 fun FormScreen(
     notaId: String?,
@@ -51,11 +51,24 @@ fun FormScreen(
     tonsActuales: String,
     viewModel: ViewModel_board
 ) {
-    // Forma más segura de obtener la Activity para poder cerrarla después
     val actividad = LocalContext.current as Activity
 
+    // --- VARIABLES DE BASE DE DATOS Y ESTADO ---
+    // Si tu DBAuxiliar pide context, usa: val dbAuxiliar = remember { DBAuxiliar(actividad) }
+    val dbAuxiliar = remember { DBAuxiliar() }
+    var listaProveedores by remember { mutableStateOf(listOf<Proveedor>()) }
+
+    // Control del formulario
     var proveedor by remember { mutableStateOf(provActual) }
     var toneladas by remember { mutableStateOf(tonsActuales) }
+    var menuExpandido by remember { mutableStateOf(false) }
+
+    // --- DESCARGAR PROVEEDORES AL ABRIR LA PANTALLA ---
+    LaunchedEffect(Unit) {
+        dbAuxiliar.escucharProveedores { proveedoresDB ->
+            listaProveedores = proveedoresDB
+        }
+    }
 
     Column(modifier = Modifier.padding(24.dp).fillMaxWidth()) {
         Text(
@@ -65,12 +78,51 @@ fun FormScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(
-            value = proveedor,
-            onValueChange = { proveedor = it },
-            label = { Text("Proveedor Agropecuario") },
+        // --- EL NUEVO MENÚ DESPLEGABLE DE PROVEEDORES ---
+        ExposedDropdownMenuBox(
+            expanded = menuExpandido,
+            onExpandedChange = { menuExpandido = !menuExpandido },
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            // El campo de texto que el usuario ve
+            OutlinedTextField(
+                value = proveedor,
+                onValueChange = {}, // Vacío porque es de solo lectura, se llena al seleccionar
+                readOnly = true,
+                label = { Text("Selecciona un Proveedor") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuExpandido)
+                },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+
+            // La lista que se abre
+            ExposedDropdownMenu(
+                expanded = menuExpandido,
+                onDismissRequest = { menuExpandido = false }
+            ) {
+                if (listaProveedores.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Cargando proveedores...") },
+                        onClick = { }
+                    )
+                } else {
+                    listaProveedores.forEach { prov ->
+                        DropdownMenuItem(
+                            text = { Text(prov.nombre) },
+                            onClick = {
+                                proveedor = prov.nombre // Guardamos el nombre seleccionado
+                                menuExpandido = false   // Cerramos el menú
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        // --- FIN DEL MENÚ DESPLEGABLE ---
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -84,19 +136,20 @@ fun FormScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Botón de Guardar / Actualizar
+        // --- BOTÓN DE GUARDAR / ACTUALIZAR ---
         Button(
             onClick = {
+                // Validación para no guardar datos vacíos
                 if (proveedor.isBlank() || toneladas.isBlank()) return@Button
                 val tons = toneladas.toDoubleOrNull() ?: 0.0
 
                 if (notaId == null) {
-                    // Creamos el objeto usando tu modelo NotaPizarra
+                    // Creamos nueva nota
                     val nuevaNota = NotaPizarra(
                         nombreProveedor = proveedor,
                         cantidadToneladas = tons,
-                        fechaCompra = System.currentTimeMillis(), // Guarda la fecha y hora exactas
-                        posicionX = 100f, // Coordenadas iniciales por defecto al crearla
+                        fechaCompra = System.currentTimeMillis(),
+                        posicionX = 100f,
                         posicionY = 100f
                     )
                     viewModel.crearNuevaNota(nuevaNota)
@@ -105,7 +158,6 @@ fun FormScreen(
                     viewModel.actualizarNota(notaId, proveedor, tons)
                 }
 
-                // Cerramos la pantalla y regresamos a la pizarra
                 actividad.finish()
             },
             modifier = Modifier.fillMaxWidth()
@@ -113,7 +165,7 @@ fun FormScreen(
             Text("Clavar en Pizarra")
         }
 
-        // Botón de Eliminar (Solo visible si estamos editando)
+        // --- BOTÓN DE ELIMINAR (Solo en edición) ---
         if (notaId != null) {
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedButton(
