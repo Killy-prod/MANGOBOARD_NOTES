@@ -161,9 +161,9 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
                     val notasOrdenadas = listaNotas.sortedByDescending { it.fechaCompra }
 
                     // 2. Define las medidas para la cuadrícula
-                    val totalColumnas = 3
+                    val totalColumnas = 4
                     val distanciaX = 550f // Distancia horizontal entre notas
-                    val distanciaY = 350f // Distancia vertical entre notas
+                    val distanciaY = 300f // Distancia vertical entre notas
 
                     // 3. Recorre cada nota y calcula su nueva posición X, Y
                     notasOrdenadas.forEachIndexed { index, nota ->
