@@ -5,61 +5,47 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 class DBAuxiliar {
     private val db = FirebaseFirestore.getInstance()
+    // Definimos una constante para no equivocarnos nunca más
+    private val COLECCION = "notas_pizarra"
 
-    // 1. Función para agregar una nueva nota de compra
     fun agregarNota(nota: NotaPizarra) {
-        db.collection("notas_pizarra").add(nota)
-            .addOnSuccessListener {
-                Log.d("FIREBASE_APP", "¡Nota guardada con éxito!")
-            }
-            .addOnFailureListener { error ->
-                Log.e("FIREBASE_APP", "Error al guardar: ${error.message}")
-            }
+        db.collection(COLECCION).document(nota.id).set(nota) // Usamos .set(nota) con ID para control total
+            .addOnSuccessListener { Log.d("FIREBASE_APP", "Nota guardada!") }
     }
 
-    // 2. Función para escuchar la pizarra EN TIEMPO REAL
     fun escucharPizarra(onNotasCambialas: (List<NotaPizarra>) -> Unit) {
-        db.collection("notas_pizarra")
+        db.collection(COLECCION)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("FIREBASE_APP", "Error al escuchar: ${error.message}")
-                    return@addSnapshotListener
-                }
-
+                if (error != null) return@addSnapshotListener
                 if (snapshot != null) {
                     val notas = snapshot.toObjects(NotaPizarra::class.java)
-                    Log.d("FIREBASE_APP", "Se leyeron ${notas.size} notas de la nube")
                     onNotasCambialas(notas)
                 }
             }
     }
 
-    // 3. Función para actualizar coordenadas (drag & drop)
     fun actualizarCoordenadas(notaId: String, x: Float, y: Float) {
-        db.collection("notas_pizarra").document(notaId)
-            .update(
-                mapOf(
-                    "posicionX" to x,
-                    "posicionY" to y
-                )
-            )
+        val actualizaciones = mapOf("posicionX" to x, "posicionY" to y)
+        // AHORA SÍ: Usamos la constante COLECCION correcta
+        db.collection(COLECCION).document(notaId).update(actualizaciones)
     }
 
-    // 4. Función para editar los datos de una nota
-    fun actualizarDatosNota(notaId: String, proveedor: String, toneladas: Double) {
-        db.collection("notas_pizarra").document(notaId)
-            .update(
-                mapOf(
-                    "nombreProveedor" to proveedor,
-                    "cantidadToneladas" to toneladas
-                )
-            )
+    fun actualizarNota(notaId: String, nuevoProveedor: String, nuevasToneladas: Double, nuevaDesc: String, nuevaFecha: Long) {
+        val actualizaciones = mapOf(
+            "nombreProveedor" to nuevoProveedor,
+            "cantidadToneladas" to nuevasToneladas,
+            "descripcion" to nuevaDesc,
+            "fechaCompra" to nuevaFecha
+        )
+        // AHORA SÍ: Usamos la constante COLECCION correcta
+        db.collection(COLECCION).document(notaId).update(actualizaciones)
     }
 
-    // 5. Función para eliminar una nota
     fun eliminarNota(notaId: String) {
-        db.collection("notas_pizarra").document(notaId).delete()
+        db.collection(COLECCION).document(notaId).delete()
     }
+
+
 
     fun agregarProveedor(proveedor: Proveedor) {
         db.collection("proveedores").add(proveedor)
@@ -75,4 +61,7 @@ class DBAuxiliar {
                 onProveedoresCambio(lista)
             }
     }
+
+
 }
+
