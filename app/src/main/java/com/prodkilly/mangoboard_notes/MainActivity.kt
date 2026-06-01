@@ -159,17 +159,24 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotaAdhesivaItem(nota: NotaPizarra, viewModel: ViewModel_board, onClick: () -> Unit) {
+    // 1. Definimos el formateador y la fecha aquí mismo
     val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     val fechaString = formatoFecha.format(Date(nota.fechaCompra))
 
-    var offsetX by remember(nota.posicionX) { mutableStateOf(nota.posicionX) }
-    var offsetY by remember(nota.posicionY) { mutableStateOf(nota.posicionY) }
+    // 2. Estados de posición
+    var offsetX by remember(nota.id) { mutableStateOf(nota.posicionX) }
+    var offsetY by remember(nota.id) { mutableStateOf(nota.posicionY) }
     var estaArrastrando by remember { mutableStateOf(false) }
+
+    LaunchedEffect(nota.posicionX, nota.posicionY) {
+        if (!estaArrastrando) {
+            offsetX = nota.posicionX
+            offsetY = nota.posicionY
+        }
+    }
 
     Card(
         onClick = onClick,
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF9C4)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         modifier = Modifier
             .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
             .width(250.dp)
@@ -191,11 +198,14 @@ fun NotaAdhesivaItem(nota: NotaPizarra, viewModel: ViewModel_board, onClick: () 
     ) {
         Column(modifier = Modifier.padding(12.dp).fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
             Text(text = "${nota.cantidadToneladas} Tons", style = MaterialTheme.typography.titleLarge)
+
             if (nota.descripcion.isNotBlank()) {
                 Text(text = nota.descripcion, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray, maxLines = 2)
             }
+
             Column {
                 Text(text = "Prov: ${nota.nombreProveedor}", style = MaterialTheme.typography.bodyMedium)
+                // ¡AQUÍ ESTAMOS USANDO LA VARIABLE QUE DEFINIMOS ARRIBA!
                 Text(text = fechaString, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
             }
         }
