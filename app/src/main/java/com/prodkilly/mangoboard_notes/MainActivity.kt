@@ -105,7 +105,8 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
                 .padding(16.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
+                    .offset(y = (-50).dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -127,7 +128,7 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // La Pizarra Libre (Box)
             Box(modifier = Modifier.fillMaxSize()) {
@@ -159,11 +160,15 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotaAdhesivaItem(nota: NotaPizarra, viewModel: ViewModel_board, onClick: () -> Unit) {
-    // 1. Definimos el formateador y la fecha aquí mismo
     val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     val fechaString = formatoFecha.format(Date(nota.fechaCompra))
 
-    // 2. Estados de posición
+    val colorNota = try {
+        Color(android.graphics.Color.parseColor(nota.colorHex))
+    } catch (e: Exception) {
+        Color(0xFFFFF9C4)
+    }
+
     var offsetX by remember(nota.id) { mutableStateOf(nota.posicionX) }
     var offsetY by remember(nota.id) { mutableStateOf(nota.posicionY) }
     var estaArrastrando by remember { mutableStateOf(false) }
@@ -177,6 +182,8 @@ fun NotaAdhesivaItem(nota: NotaPizarra, viewModel: ViewModel_board, onClick: () 
 
     Card(
         onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = colorNota),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         modifier = Modifier
             .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
             .width(250.dp)
@@ -198,14 +205,11 @@ fun NotaAdhesivaItem(nota: NotaPizarra, viewModel: ViewModel_board, onClick: () 
     ) {
         Column(modifier = Modifier.padding(12.dp).fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween) {
             Text(text = "${nota.cantidadToneladas} Tons", style = MaterialTheme.typography.titleLarge)
-
             if (nota.descripcion.isNotBlank()) {
                 Text(text = nota.descripcion, style = MaterialTheme.typography.bodySmall, color = Color.DarkGray, maxLines = 2)
             }
-
             Column {
                 Text(text = "Prov: ${nota.nombreProveedor}", style = MaterialTheme.typography.bodyMedium)
-                // ¡AQUÍ ESTAMOS USANDO LA VARIABLE QUE DEFINIMOS ARRIBA!
                 Text(text = fechaString, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
             }
         }

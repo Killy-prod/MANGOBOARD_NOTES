@@ -30,15 +30,24 @@ class DBAuxiliar {
         db.collection(COLECCION).document(notaId).update(actualizaciones)
     }
 
-    fun actualizarNota(notaId: String, nuevoProveedor: String, nuevasToneladas: Double, nuevaDesc: String, nuevaFecha: Long) {
+    fun actualizarNota(
+        notaId: String,
+        nuevoProveedor: String,
+        nuevasToneladas: Double,
+        nuevaDesc: String,
+        nuevaFecha: Long,
+        nuevoColor: String // <--- Agregamos este parámetro
+    ) {
         val actualizaciones = mapOf(
             "nombreProveedor" to nuevoProveedor,
             "cantidadToneladas" to nuevasToneladas,
             "descripcion" to nuevaDesc,
-            "fechaCompra" to nuevaFecha
+            "fechaCompra" to nuevaFecha,
+            "colorHex" to nuevoColor // <--- Lo incluimos en Firebase
         )
-        // AHORA SÍ: Usamos la constante COLECCION correcta
-        db.collection(COLECCION).document(notaId).update(actualizaciones)
+
+        db.collection("notas_pizarra").document(notaId)
+            .update(actualizaciones)
     }
 
     fun eliminarNota(notaId: String) {

@@ -13,11 +13,12 @@ data class Proveedor(
 
 // Modelo para las Notas de la Pizarra (Etiquetas Adhesivas)
 data class NotaPizarra(
-    val id: String = java.util.UUID.randomUUID().toString(), // O como lo tengas generado
+    val id: String = "",
     val nombreProveedor: String = "",
     val cantidadToneladas: Double = 0.0,
-    val descripcion: String = "", // <--- ESTA ES LA LÍNEA QUE TE FALTA
+    val descripcion: String = "",
     val fechaCompra: Long = 0L,
     val posicionX: Float = 0f,
-    val posicionY: Float = 0f
+    val posicionY: Float = 0f,
+    val colorHex: String = "#FFF9C4" // Color por defecto (amarillo claro)
 )

@@ -31,9 +31,8 @@ class ViewModel_board : ViewModel() {
         dbAuxiliar.actualizarCoordenadas(notaId, x, y)
     }
 
-    fun actualizarNota(id: String, prov: String, tons: Double, desc: String, fecha: Long) {
-        // El ViewModel recibe los 5 datos y se los pasa al auxiliar
-        dbAuxiliar.actualizarNota(id, prov, tons, desc, fecha)
+    fun actualizarNota(id: String, prov: String, tons: Double, desc: String, fecha: Long, color: String) {
+        dbAuxiliar.actualizarNota(id, prov, tons, desc, fecha, color)
     }
 
     fun eliminarNota(notaId: String) {

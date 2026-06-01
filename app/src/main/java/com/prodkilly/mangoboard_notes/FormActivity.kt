@@ -8,8 +8,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
@@ -66,228 +72,100 @@ fun FormScreen(
 ) {
     val actividad = LocalContext.current as Activity
     val contexto = LocalContext.current
-
     val dbAuxiliar = remember { DBAuxiliar() }
-    var listaProveedores by remember { mutableStateOf(listOf<Proveedor>()) }
 
+    // Estados
+    var listaProveedores by remember { mutableStateOf(listOf<Proveedor>()) }
     var proveedor by remember { mutableStateOf(provActual) }
     var toneladas by remember { mutableStateOf(tonsActuales) }
     var descripcion by remember { mutableStateOf(descActual) }
     var fechaLong by remember { mutableStateOf(fechaActual) }
-
     var menuExpandido by remember { mutableStateOf(false) }
 
-    // Formateador para mostrar la fecha de forma bonita en el botón selector
-    val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
-    val calendario = remember { Calendar.getInstance() }
+    val listaColores = listOf("#FFF9C4", "#FFCCBC", "#C8E6C9", "#BBDEFB", "#E1BEE7")
+    var colorSeleccionado by remember { mutableStateOf(listaColores[0]) }
 
+    val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val calendario = Calendar.getInstance()
+
+    // Carga de datos
     LaunchedEffect(Unit) {
-        dbAuxiliar.escucharProveedores { proveedoresDB ->
-            listaProveedores = proveedoresDB
-        }
+        dbAuxiliar.escucharProveedores { listaProveedores = it }
     }
 
-    Column(modifier = Modifier.padding(24.dp).fillMaxWidth()) {
-        Text(
-            text = if (notaId == null) "Añadir Nota a Pizarra" else "Editar Nota",
-            style = MaterialTheme.typography.headlineSmall
-        )
+    // DIÁLOGOS
+    val timePickerDialog = TimePickerDialog(contexto, { _, h, m ->
+        calendario.timeInMillis = fechaLong
+        calendario.set(Calendar.HOUR_OF_DAY, h); calendario.set(Calendar.MINUTE, m)
+        fechaLong = calendario.timeInMillis
+    }, calendario.get(Calendar.HOUR_OF_DAY), calendario.get(Calendar.MINUTE), true)
+
+    val datePickerDialog = DatePickerDialog(contexto, { _, y, m, d ->
+        calendario.set(y, m, d)
+        fechaLong = calendario.timeInMillis
+        timePickerDialog.show()
+    }, calendario.get(Calendar.YEAR), calendario.get(Calendar.MONTH), calendario.get(Calendar.DAY_OF_MONTH))
+
+    // UI PRINCIPAL
+    Column(modifier = Modifier.padding(24.dp).fillMaxSize().verticalScroll(rememberScrollState())) {
+        Text(text = if (notaId == null) "Añadir Nota" else "Editar Nota", style = MaterialTheme.typography.headlineSmall)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 1. Selector de Proveedor
+        Text("Proveedor", style = MaterialTheme.typography.bodySmall)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedCard(onClick = { menuExpandido = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(text = proveedor.ifBlank { "Selecciona un proveedor" }, modifier = Modifier.padding(16.dp))
+            }
+            DropdownMenu(expanded = menuExpandido, onDismissRequest = { menuExpandido = false }) {
+                listaProveedores.forEach { prov ->
+                    DropdownMenuItem(text = { Text(prov.nombre) }, onClick = { proveedor = prov.nombre; menuExpandido = false })
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 2. Campos de Texto
+        OutlinedTextField(value = toneladas, onValueChange = { toneladas = it }, label = { Text("Toneladas") }, modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth())
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 3. Selector de Color
+        Text("Color de nota", style = MaterialTheme.typography.bodySmall)
+        Row(modifier = Modifier.padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listaColores.forEach { hexColor ->
+                Box(modifier = Modifier.size(40.dp).background(Color(android.graphics.Color.parseColor(hexColor)), CircleShape)
+                    .clickable { colorSeleccionado = hexColor }
+                    .border(if (colorSeleccionado == hexColor) 2.dp else 0.dp, Color.Black, CircleShape))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 4. Selector Fecha
+        OutlinedCard(onClick = { datePickerDialog.show() }, modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Fecha: ${formatoFecha.format(Date(fechaLong))}", modifier = Modifier.padding(16.dp))
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Proveedor Agropecuario",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-        )
-
-        // --- CONTENEDOR SELECCIONADOR ---
-        Box(modifier = Modifier.fillMaxWidth()) {
-            OutlinedCard(
-                onClick = { menuExpandido = true },
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.outlinedCardColors(containerColor = Color.Transparent)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = if (proveedor.isBlank()) "Selecciona un proveedor de la lista" else proveedor,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = if (proveedor.isBlank()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Desplegar lista",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+        // 5. Botones
+        Button(onClick = {
+            val tons = toneladas.toDoubleOrNull() ?: 0.0
+            if (notaId == null) {
+                viewModel.crearNuevaNota(NotaPizarra(id = UUID.randomUUID().toString(), nombreProveedor = proveedor, cantidadToneladas = tons, descripcion = descripcion, fechaCompra = fechaLong, colorHex = colorSeleccionado))
+            } else {
+                viewModel.actualizarNota(notaId, proveedor, tons, descripcion, fechaLong, colorSeleccionado)
             }
-
-            DropdownMenu(
-                expanded = menuExpandido,
-                onDismissRequest = { menuExpandido = false },
-                modifier = Modifier.fillMaxWidth(0.85f)
-            ) {
-                if (listaProveedores.isEmpty()) {
-                    DropdownMenuItem(
-                        text = { Text("No hay proveedores registrados") },
-                        onClick = { menuExpandido = false }
-                    )
-                } else {
-                    listaProveedores.forEach { prov ->
-                        DropdownMenuItem(
-                            text = { Text(prov.nombre) },
-                            onClick = {
-                                proveedor = prov.nombre
-                                menuExpandido = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Campo de Toneladas
-        OutlinedTextField(
-            value = toneladas,
-            onValueChange = { toneladas = it },
-            label = { Text("Toneladas de Mango") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // NUEVO: Campo de Descripción General / Comentarios
-        OutlinedTextField(
-            value = descripcion,
-            onValueChange = { descripcion = it },
-            label = { Text("Descripción / Comentarios extras") },
-            modifier = Modifier.fillMaxWidth(),
-            maxLines = 3
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // NUEVO: Selector de Fecha y Hora Integrado
-        Text(
-            text = "Fecha y Hora del Registro",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-        )
-
-        // Configuración de los diálogos nativos
-        val timePickerDialog = TimePickerDialog(
-            contexto,
-            { _, hour, minute ->
-                calendario.set(Calendar.HOUR_OF_DAY, hour)
-                calendario.set(Calendar.MINUTE, minute)
-                fechaLong = calendario.timeInMillis // Guardamos los cambios finales
-            },
-            calendario.get(Calendar.HOUR_OF_DAY),
-            calendario.get(Calendar.MINUTE),
-            true
-        )
-
-        val datePickerDialog = DatePickerDialog(
-            contexto,
-            { _, year, month, day ->
-                calendario.set(Calendar.YEAR, year)
-                calendario.set(Calendar.MONTH, month)
-                calendario.set(Calendar.DAY_OF_MONTH, day)
-                // Al confirmar el día, salta inmediatamente el de la hora
-                timePickerDialog.show()
-            },
-            calendario.get(Calendar.YEAR),
-            calendario.get(Calendar.MONTH),
-            calendario.get(Calendar.DAY_OF_MONTH)
-        )
-
-        OutlinedCard(
-            onClick = {
-                calendario.timeInMillis = fechaLong
-                datePickerDialog.show()
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.outlinedCardColors(containerColor = Color.Transparent)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = formatoFecha.format(Date(fechaLong)),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = "Cambiar",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Guardado de datos actualizado
-        Button(
-            onClick = {
-                if (proveedor.isBlank() || toneladas.isBlank()) return@Button
-                val tons = toneladas.toDoubleOrNull() ?: 0.0
-
-                if (notaId == null) {
-                    // Caso: Crear nota nueva
-                    val nuevaNota = NotaPizarra(
-                        nombreProveedor = proveedor,
-                        cantidadToneladas = tons,
-                        descripcion = descripcion, // <-- Ya lo tenías
-                        fechaCompra = fechaLong,
-                        posicionX = 100f,
-                        posicionY = 100f
-                    )
-                    viewModel.crearNuevaNota(nuevaNota)
-                } else {
-                    // Caso: EDITAR NOTA EXISTENTE
-                    // ¡AQUÍ ESTÁ EL POSIBLE ERROR! Asegúrate de enviar los 5 parámetros:
-                    viewModel.actualizarNota(
-                        notaId,
-                        proveedor,
-                        tons,
-                        descripcion, // <-- ¿Le estás pasando esto?
-                        fechaLong    // <-- ¿Le estás pasando esto?
-                    )
-                }
-
-                actividad.finish()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Clavar en Pizarra")
-        }
+            actividad.finish()
+        }, modifier = Modifier.fillMaxWidth()) { Text("Guardar") }
 
         if (notaId != null) {
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedButton(
-                onClick = {
-                    viewModel.eliminarNota(notaId)
-                    actividad.finish()
-                },
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Despegar Nota")
+            OutlinedButton(onClick = { viewModel.eliminarNota(notaId); actividad.finish() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)) {
+                Text("Despegar Nota (Eliminar)")
             }
         }
     }
