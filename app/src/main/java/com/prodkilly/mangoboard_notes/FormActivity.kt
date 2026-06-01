@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.prodkilly.mangoboard_notes.ui.theme.lightred20
+import com.prodkilly.mangoboard_notes.ui.theme.yellow10
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -161,10 +163,13 @@ fun FormScreen(
                 viewModel.actualizarNota(notaId, proveedor, tons, descripcion, fechaLong, colorSeleccionado)
             }
             actividad.finish()
-        }, modifier = Modifier.fillMaxWidth()) { Text("Guardar") }
+        }, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = yellow10)
+        ) { Text("Guardar") }
 
         if (notaId != null) {
-            OutlinedButton(onClick = { viewModel.eliminarNota(notaId); actividad.finish() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Red)) {
+            OutlinedButton(onClick = { viewModel.eliminarNota(notaId); actividad.finish() }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = lightred20),
+                ) {
                 Text("Despegar Nota (Eliminar)")
             }
         }

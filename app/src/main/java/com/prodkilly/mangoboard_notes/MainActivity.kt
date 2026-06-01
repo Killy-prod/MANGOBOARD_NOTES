@@ -1,5 +1,6 @@
 package com.prodkilly.mangoboard_notes
 
+import android.R
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -18,6 +19,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
+import com.prodkilly.mangoboard_notes.ui.theme.MiColorFondo
+import com.prodkilly.mangoboard_notes.ui.theme.UltraRed
+import com.prodkilly.mangoboard_notes.ui.theme.lightred20
+import com.prodkilly.mangoboard_notes.ui.theme.yellow10
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -31,50 +36,62 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                var estaAutenticado by remember { mutableStateOf(false) }
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    // Esto toma automáticamente el color que definiste en Theme.kt
+                    color = MiColorFondo
+                ) {
+                    var estaAutenticado by remember { mutableStateOf(false) }
 
-                if (!estaAutenticado) {
-                    PantallaAutenticacion(onAutenticado = { estaAutenticado = true })
-                } else {
-                    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-                    val scope = rememberCoroutineScope()
-                    val contexto = LocalContext.current
+                    if (!estaAutenticado) {
+                        PantallaAutenticacion(onAutenticado = { estaAutenticado = true })
+                    } else {
+                        val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                        val scope = rememberCoroutineScope()
+                        val contexto = LocalContext.current
 
-                    ModalNavigationDrawer(
-                        drawerState = drawerState,
-                        drawerContent = {
-                            ModalDrawerSheet {
-                                Text("Menú MangoBoard", modifier = Modifier.padding(16.dp))
-                                HorizontalDivider()
-                                NavigationDrawerItem(
-                                    label = { Text("Gestionar Proveedores") },
-                                    selected = false,
-                                    onClick = {
-                                        val intent = Intent(contexto, ProveedoresActivity::class.java)
-                                        contexto.startActivity(intent)
-                                        scope.launch { drawerState.close() }
+                        ModalNavigationDrawer(
+                            drawerState = drawerState,
+                            drawerContent = {
+                                ModalDrawerSheet {
+                                    Text("Menú MangoBoard",
+                                        modifier = Modifier.padding(16.dp, ),
+                                        color = UltraRed
+                                    )
+                                    HorizontalDivider()
+                                    NavigationDrawerItem(
+                                        label = { Text("Gestionar Proveedores") },
+                                        selected = false,
+                                        onClick = {
+                                            val intent = Intent(contexto, ProveedoresActivity::class.java)
+                                            contexto.startActivity(intent)
+                                            scope.launch { drawerState.close() }
                                         }
-                                )
+                                    )
+                                }
                             }
-                        }
-                    ) {
-                        Scaffold(
-                            topBar = {
-                                @OptIn(ExperimentalMaterial3Api::class)
-                                TopAppBar(
-                                    title = { Text("MangoBoard") },
-                                    navigationIcon = {
-                                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                            Icon(Icons.Default.Menu, contentDescription = "Menú")
+                        ) {
+                            Scaffold(
+                                topBar = {
+                                    @OptIn(ExperimentalMaterial3Api::class)
+                                    TopAppBar(
+                                        title = { Text("MangoBoard",
+                                            color = UltraRed) },
+                                        navigationIcon = {
+                                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                                Icon(Icons.Default.Menu, contentDescription = "Menú")
+                                            }
                                         }
-                                    }
-                                )
+                                    )
+                                }
+                            ) { paddingValues ->
+                                PizarraScreen(viewModel = viewModel, modifier = Modifier.padding(paddingValues))
                             }
-                        ) { paddingValues ->
-                            PizarraScreen(viewModel = viewModel, modifier = Modifier.padding(paddingValues))
                         }
                     }
                 }
+
+
             }
         }
     }
@@ -92,7 +109,7 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
                     val intent = Intent(contexto, FormActivity::class.java)
                     contexto.startActivity(intent)
                 },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = yellow10
             ) {
                 Text("+", style = MaterialTheme.typography.headlineMedium, color = Color.White)
             }
@@ -110,7 +127,7 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Pizarra Diaria", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                Text("Pizarra Diaria", style = MaterialTheme.typography.headlineMedium, color = lightred20)
 
                 Button(onClick = {
                     val notasOrdenadas = listaNotas.sortedByDescending { it.fechaCompra }
@@ -118,13 +135,16 @@ fun PizarraScreen(viewModel: ViewModel_board, modifier: Modifier = Modifier) {
                     val distanciaX = 550f
                     val distanciaY = 350f
 
+
+
                     notasOrdenadas.forEachIndexed { index, nota ->
                         val columna = index % totalColumnas
                         val fila = index / totalColumnas
                         viewModel.moverNota(nota.id, columna * distanciaX, fila * distanciaY)
                     }
+
                 }) {
-                    Text("Ordenar")
+                    Text("Ordenar",)
                 }
             }
 

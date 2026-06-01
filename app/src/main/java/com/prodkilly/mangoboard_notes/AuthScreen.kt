@@ -2,6 +2,7 @@ package com.prodkilly.mangoboard_notes
 
 
 import androidx.biometric.BiometricPrompt
+import androidx.compose.foundation.Image
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.layout.*
@@ -13,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.prodkilly.mangoboard_notes.ui.theme.UltraRed
 
 @Composable
 fun PantallaAutenticacion(onAutenticado: () -> Unit) {
@@ -34,11 +37,10 @@ fun PantallaAutenticacion(onAutenticado: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Filled.Lock,
-            contentDescription = "Logo",
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary
+        Image(
+            painter = painterResource(id = R.drawable.logo_mangoboard), // Pon aquí tu nombre de archivo sin extensión
+            contentDescription = "Logo de MangoBoard",
+            modifier = Modifier.size(120.dp) // Ajusta el tamaño según tu logo
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -47,7 +49,7 @@ fun PantallaAutenticacion(onAutenticado: () -> Unit) {
             text = "MangoBoard",
             fontSize = 32.sp,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = UltraRed
         )
         Text(
             text = "Protegido con Biometría",
@@ -58,7 +60,8 @@ fun PantallaAutenticacion(onAutenticado: () -> Unit) {
         Spacer(modifier = Modifier.height(48.dp))
 
         // Botón de respaldo
-        Button(onClick = { solicitarHuella(contexto, onAutenticado) }) {
+        Button(onClick = { solicitarHuella(contexto, onAutenticado) },
+            colors = ButtonDefaults.buttonColors(containerColor = UltraRed)) {
             Text("Usar Huella Digital")
         }
     }

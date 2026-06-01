@@ -1,6 +1,9 @@
 package com.prodkilly.mangoboard_notes
 
-
+import com.prodkilly.mangoboard_notes.ui.theme.UltraRed
+import com.prodkilly.mangoboard_notes.ui.theme.yellow10
+import com.prodkilly.mangoboard_notes.DBAuxiliar
+import com.prodkilly.mangoboard_notes.Proveedor
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,7 +51,7 @@ fun PantallaProveedores() {
         Text(
             text = "Directorio de Proveedores",
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.primary
+            color = UltraRed
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -95,7 +98,8 @@ fun PantallaProveedores() {
                             region = ""
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = yellow10)
                 ) {
                     Text("Guardar Proveedor")
                 }
